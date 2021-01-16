@@ -18,10 +18,10 @@ def run(client, tests):
             choice = choose_test(tests)
             run_testing(client, choice)
         elif command == COMMAND[3]:
-            disconnect(client)
+            disconnect_client(client)
             break
         else:
-            print("Не корректная команда")
+            print("Некорректная команда")
 
 
 def get_list(msg_accepted):
@@ -69,6 +69,7 @@ def run_testing(client, choice):
             print(test["result"])
             break
 
+
 def answer_to(test):
     while True:
         print(test["question"])
@@ -87,7 +88,38 @@ def answer_to(test):
             print('такого варианта вообще-то нет!'
                   ' Отвечай заново!')
 
-def disconnect(client):
+
+def disconnect_client(client):  # клиент решил отключиться
+    msg = {
+        "type": Types_Client.DISCONNECT
+    }
+    msg = json.dumps(msg)
+    request(client, msg)
+    result = receive_disconnect(client)
+    if result["type"] == Types_Server.DISCONNECT:
+        client.shutdown()
+        client.close()
+        exit()
+
+
+def request(client, msg):
+    client.sendall(bytes(msg, encoding='utf-8'))
+
+
+def receive(client_socket):
+    msg = json.loads(client_receive(client_socket).decode('utf-8'))
+    if msg["type"] == Types_Server.DISCONNECT:
+        disconnect_server(client_socket)
+    return msg
+
+def receive_disconnect(client_socket):
+    return json.loads(client_receive(client_socket).decode('utf-8'))
+
+def client_receive(current_socket):
+    return current_socket.recv(4096)
+
+
+def disconnect_server(client):  # сервер решил отключить клиента
     msg = {
         "type": Types_Client.DISCONNECT
     }
@@ -96,15 +128,3 @@ def disconnect(client):
     client.shutdown()
     client.close()
     exit()
-
-
-def request(client, msg):
-    client.sendall(bytes(msg, encoding='utf-8'))
-
-
-def receive(client_socket):
-    return json.loads(client_receive(client_socket).decode('utf-8'))
-
-
-def client_receive(current_socket):
-    return current_socket.recv(4096)
