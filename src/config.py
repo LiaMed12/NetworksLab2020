@@ -2,6 +2,7 @@ from math import factorial, sqrt
 
 from .core import *
 
+TIME_FREEZE = 5
 
 class ServerConfig:
     IP = "127.0.0.1"
